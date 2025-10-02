@@ -95,8 +95,8 @@ const AnimatedGrid = () => (
 );
 
 export function BackgroundCircles({
-    title = "Background Circles",
-    description = "Optional Description",
+    title = "Продажник из тиндера",
+    description = "",
     className,
     variant = "octonary",
 }: BackgroundCirclesProps) {
@@ -148,8 +148,60 @@ export function BackgroundCircles({
                     </motion.div>
                 ))}
             </motion.div>
+            {/* Заголовок и кнопки по центру фиолетового круга */}
+            <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                <div className="text-center px-6 w-[520px] max-w-[92vw] mx-auto">
+                    <h1 className="text-3xl md:text-5xl font-semibold text-slate-900 dark:text-white">
+                        {title}
+                    </h1>
+                    {description ? (
+                        <p className="mt-3 text-sm md:text-base opacity-80 text-slate-700 dark:text-slate-300">
+                            {description}
+                        </p>
+                    ) : null}
+                    <div className="mt-8 space-y-4 pointer-events-auto">
+                        <button aria-label="Выявление потребностей" className="group w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-purple-400/40">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+                                📘
+                            </span>
+                            <span className="flex-1">
+                                <span className="block text-base md:text-lg font-semibold text-white">Выявление потребностей</span>
+                                <span className="block text-sm text-white/70">Сбор информации и понимание задач клиента</span>
+                            </span>
+                        </button>
 
-            {/* Заголовок и описание удалены */}
+                        <button aria-label="Отработка возражений" className="group w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-purple-400/40">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+                                ⚡
+                            </span>
+                            <span className="flex-1">
+                                <span className="block text-base md:text-lg font-semibold text-white">Отработка возражений</span>
+                                <span className="block text-sm text-white/70">Работа с сомнениями и барьерами клиента</span>
+                            </span>
+                        </button>
+
+                        <button aria-label="Постмит после встречи" className="group w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-purple-400/40">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+                                📨
+                            </span>
+                            <span className="flex-1">
+                                <span className="block text-base md:text-lg font-semibold text-white">Постмит после встречи</span>
+                                <span className="block text-sm text-white/70">Резюме, материалы и дальнейшие шаги</span>
+                            </span>
+                        </button>
+
+                        <button aria-label="Дожим клиентов" className="group w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-purple-400/40">
+                            <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-white/10 text-white/90">
+                                🎯
+                            </span>
+                            <span className="flex-1">
+                                <span className="block text-base md:text-lg font-semibold text-white">Дожим клиентов</span>
+                                <span className="block text-sm text-white/70">Финализация сделки и призыв к действию</span>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
             <div className="absolute inset-0 [mask-image:radial-gradient(90%_60%_at_50%_50%,#000_40%,transparent)]">
                 <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,#0F766E/30%,transparent_70%)] blur-[120px]" />
