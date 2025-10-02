@@ -2,7 +2,6 @@
 
 import { motion } from "framer-motion";
 import clsx from "clsx";
-import { useState } from "react";
 
 interface BackgroundCirclesProps {
     title?: string;
@@ -101,10 +100,6 @@ export function BackgroundCircles({
     variant = "octonary",
 }: BackgroundCirclesProps) {
     const variantStyles = COLOR_VARIANTS[variant];
-
-    const variants = Object.keys(
-        COLOR_VARIANTS
-    ) as (keyof typeof COLOR_VARIANTS)[];
 
     return (
         <div
