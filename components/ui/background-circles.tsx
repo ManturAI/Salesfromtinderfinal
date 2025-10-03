@@ -79,7 +79,7 @@ const COLOR_VARIANTS = {
 
 const AnimatedGrid = () => (
     <motion.div
-        className="absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)]"
+        className="absolute inset-0"
         animate={{
             backgroundPosition: ["0% 0%", "100% 100%"],
         }}
@@ -89,7 +89,8 @@ const AnimatedGrid = () => (
             ease: "linear",
         }}
     >
-        <div className="h-full w-full [background-image:repeating-linear-gradient(100deg,#64748B_0%,#64748B_1px,transparent_1px,transparent_4%)] opacity-20" />
+        {/* Mobile: мягкий радиальный градиент без повторяющихся линий (во избежание муара на iOS) */}
+        <div className="h-full w-full opacity-10 bg-[radial-gradient(ellipse_at_center,rgba(100,116,139,0.08)_0%,transparent_60%)] md:opacity-20 md:[mask-image:radial-gradient(ellipse_at_center,transparent_30%,black)] md:[background-image:repeating-linear-gradient(100deg,#64748B_0%,#64748B_1px,transparent_1px,transparent_4%)]" />
     </motion.div>
 );
 
