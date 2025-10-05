@@ -59,10 +59,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем общее количество уроков
-    const { count: totalLessons, error: countError } = await supabase
+    const result = await supabase
       .from('lessons')
       .select('*', { count: 'exact', head: true })
       .eq('is_published', true);
+
+    const totalLessons = 'count' in result ? result.count : null;
+    const countError = 'error' in result ? result.error : null;
 
     if (countError) {
       console.error('Error fetching total lessons count:', countError);
@@ -73,16 +76,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Вычисляем статистику
-    const completedLessons = progressStats.filter((p: ProgressStat) => p.status === 'completed').length;
-    const startedLessons = progressStats.filter((p: ProgressStat) => p.status === 'started').length;
-    const totalTimeSpent = progressStats.reduce((sum: number, p: ProgressStat) => sum + (p.time_spent || 0), 0);
-    const averageCompletion = progressStats.length > 0 
+    const completedLessons = progressStats?.filter((p: ProgressStat) => p.status === 'completed').length || 0;
+    const startedLessons = progressStats?.filter((p: ProgressStat) => p.status === 'started').length || 0;
+    const totalTimeSpent = progressStats?.reduce((sum: number, p: ProgressStat) => sum + (p.time_spent || 0), 0) || 0;
+    const averageCompletion = progressStats && progressStats.length > 0 
       ? progressStats.reduce((sum: number, p: ProgressStat) => sum + (p.completion_percentage || 0), 0) / progressStats.length 
       : 0;
 
     // Статистика по категориям
     const categoryStats: { [key: string]: any } = {};
-    progressStats.forEach((progress: ProgressStat) => {
+    progressStats?.forEach((progress: ProgressStat) => {
       const categorySlug = progress.lessons?.lesson_categories?.slug;
       const categoryName = progress.lessons?.lesson_categories?.name;
       
@@ -109,7 +112,7 @@ export async function GET(request: NextRequest) {
 
     // Статистика по типам уроков
     const typeStats: { [key: string]: any } = {};
-    progressStats.forEach((progress: ProgressStat) => {
+    progressStats?.forEach((progress: ProgressStat) => {
       const lessonType = progress.lessons?.type;
       
       if (lessonType) {
@@ -143,8 +146,8 @@ export async function GET(request: NextRequest) {
       by_category: Object.values(categoryStats),
       by_type: typeStats,
       recent_activity: progressStats
-        .sort((a: ProgressStat, b: ProgressStat) => new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
-        .slice(0, 10)
+        ?.sort((a: ProgressStat, b: ProgressStat) => new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
+        .slice(0, 10) || []
     };
 
     return NextResponse.json({ stats });

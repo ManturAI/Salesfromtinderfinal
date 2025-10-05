@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     const { data: user, error } = await supabase
       .from('users')
       .select('*')
-      .eq('telegram_id', payload.telegram_id)
+      .eq('telegram_id', payload.id)
       .single();
 
     if (error || !user) {

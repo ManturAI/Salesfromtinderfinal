@@ -16,11 +16,11 @@ export async function GET(request: NextRequest) {
       const payload = verifyTelegramJWT(telegramToken, jwtSecret);
 
       if (payload) {
-        // Получаем пользователя по telegram_id
+        // Получаем пользователя по telegram_id (using id from TelegramUser)
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('*')
-          .eq('telegram_id', payload.telegram_id)
+          .eq('telegram_id', payload.id)
           .single();
 
         if (!userError && userData) {

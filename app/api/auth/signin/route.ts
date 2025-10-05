@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: 'Authentication successful',
       user: userData,
-      session: authData.session
+      session: 'session' in authData ? authData.session : null
     });
 
   } catch (error) {

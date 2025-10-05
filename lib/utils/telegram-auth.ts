@@ -7,7 +7,7 @@ import { ParsedInitData, TelegramUser, TelegramAuthResult } from '@/lib/types/te
 export function parseInitData(initData: string): ParsedInitData | null {
   try {
     const urlParams = new URLSearchParams(initData);
-    const data: any = {};
+    const data: Record<string, unknown> = {};
     
     for (const [key, value] of urlParams.entries()) {
       if (key === 'user' || key === 'chat') {
@@ -23,7 +23,7 @@ export function parseInitData(initData: string): ParsedInitData | null {
       }
     }
     
-    return data as ParsedInitData;
+    return data as unknown as ParsedInitData;
   } catch (error) {
     console.error('Error parsing initData:', error);
     return null;
@@ -171,7 +171,7 @@ export function createTelegramJWT(user: TelegramUser, secret: string): string {
 /**
  * Верифицирует JWT токен
  */
-export function verifyTelegramJWT(token: string, secret: string): any {
+export function verifyTelegramJWT(token: string, secret: string): TelegramUser | null {
   try {
     const [header, payload, signature] = token.split('.');
     

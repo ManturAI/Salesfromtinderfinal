@@ -9,7 +9,7 @@ export const createClient = () => {
   // Use mock client if environment variables are not properly set
   if (!supabaseUrl || !supabaseKey || supabaseUrl.includes('your_') || supabaseKey.includes('your_')) {
     console.warn('Using mock Supabase client - configure environment variables for production');
-    return createMockClient() as any;
+    return createMockClient();
   }
   
   return createServerClient(supabaseUrl, supabaseKey, {
@@ -19,8 +19,9 @@ export const createClient = () => {
       },
       async setAll(cookiesToSet) {
         try {
+          const cookieStore = await cookies();
           cookiesToSet.forEach(({ name, value, options }) =>
-            (cookies() as any).set(name, value, options)
+            cookieStore.set(name, value, options)
           )
         } catch {
           // The `setAll` method was called from a Server Component.

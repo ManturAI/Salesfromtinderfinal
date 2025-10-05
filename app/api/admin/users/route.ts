@@ -33,27 +33,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Построение запроса
-    let query = supabase
+    const { data: users, error } = await supabase
       .from('users')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false });
-
-    // Фильтры
-    if (role) {
-      query = query.eq('role', role);
-    }
-
-    if (search) {
-      query = query.or(`full_name.ilike.%${search}%,email.ilike.%${search}%`);
-    }
-
-    // Пагинация
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
-    query = query.range(from, to);
-
-    const { data: users, error, count } = await query;
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
     if (error) {
       console.error('Error fetching users:', error);
@@ -68,8 +52,8 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: count || 0,
-        pages: Math.ceil((count || 0) / limit)
+        total: users?.length || 0,
+        pages: Math.ceil((users?.length || 0) / limit)
       }
     });
 

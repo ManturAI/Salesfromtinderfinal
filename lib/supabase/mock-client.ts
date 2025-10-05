@@ -215,7 +215,7 @@ const mockProgress = [
 ];
 
 // Mock query builder
-class MockQueryBuilder {
+class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
   private table: string;
   private selectFields: string = '*';
   private filters: any[] = [];
@@ -440,7 +440,10 @@ class MockQueryBuilder {
   }
 
   // Make the query builder thenable so it can be awaited
-  then(onFulfilled?: any, onRejected?: any) {
+  then<TResult1 = { data: any; error: any }, TResult2 = never>(
+    onFulfilled?: ((value: { data: any; error: any }) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+    onRejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+  ): PromiseLike<TResult1 | TResult2> {
     return this.execute().then(onFulfilled, onRejected);
   }
 }
