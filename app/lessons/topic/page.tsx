@@ -65,7 +65,7 @@ function PageContent() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [activeSection, setActiveSection] = useState<"sprint" | "archive">("sprint");
-  const [topicData, setTopicData] = useState<TopicData>(defaultTopicData);
+  const [topicData] = useState<TopicData>(defaultTopicData);
 
   const handleBack = () => router.push("/?actions=1");
 
@@ -77,7 +77,7 @@ function PageContent() {
   useEffect(() => {
     // Здесь бэкенд может загрузить данные для конкретной темы
     // const topicId = searchParams.get("id") || pathname.split("/").pop();
-    // fetchTopicData(topicId).then(setTopicData);
+    // fetchTopicData(topicId).then(_setTopicData);
   }, [pathname, searchParams]);
 
   const changeSection = (section: "sprint" | "archive") => {
@@ -133,7 +133,7 @@ function PageContent() {
     }
   };
 
-  const renderContentCard = (item: any) => (
+  const renderContentCard = (item: TopicData['sprintItems'][0] | TopicData['archiveItems'][0]) => (
     <div key={item.id} className="group w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition">
       <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-gradient-to-br from-white/10 to-white/5 text-white/90 group-hover:text-fuchsia-300 transition-colors">
         {getIcon(item.icon)}

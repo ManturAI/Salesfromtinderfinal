@@ -2,6 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+interface ProgressUpdateData extends Record<string, unknown> {
+  status: 'started' | 'completed';
+  updated_at: string;
+  completion_percentage?: number;
+  time_spent?: number;
+}
+
+interface ProgressInsertData extends Record<string, unknown> {
+  user_id: string;
+  lesson_id: string;
+  status: 'started' | 'completed';
+  completion_percentage: number;
+  time_spent: number;
+}
+
 const progressSchema = z.object({
   lesson_id: z.string().uuid('Invalid lesson ID'),
   status: z.enum(['started', 'completed']),
@@ -105,7 +120,7 @@ export async function POST(request: NextRequest) {
       .eq('lesson_id', lesson_id)
       .single();
 
-    if (checkError && checkError.code !== 'PGRST116') {
+    if (checkError && (checkError as any).code !== 'PGRST116') {
       console.error('Error checking existing progress:', checkError);
       return NextResponse.json(
         { error: 'Failed to check existing progress' },
@@ -118,7 +133,7 @@ export async function POST(request: NextRequest) {
 
     if (existingProgress) {
       // Обновляем существующий прогресс
-      const updateData: any = {
+      const updateData: ProgressUpdateData = {
         status,
         updated_at: new Date().toISOString()
       };
@@ -138,7 +153,7 @@ export async function POST(request: NextRequest) {
       const result = await supabase
         .from('user_progress')
         .update(updateData)
-        .eq('id', existingProgress.id)
+        .eq('id', (existingProgress as any).id)
         .select()
         .single();
 
@@ -146,7 +161,7 @@ export async function POST(request: NextRequest) {
       error = result.error;
     } else {
       // Создаем новый прогресс
-      const insertData: any = {
+      const insertData: ProgressInsertData = {
         user_id: user.id,
         lesson_id,
         status,

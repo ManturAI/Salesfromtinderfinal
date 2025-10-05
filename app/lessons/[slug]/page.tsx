@@ -1,10 +1,18 @@
 "use client"
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Component as EtheralShadow } from "../../../components/ui/etheral-shadow";
 import { useLessons } from "../../../lib/hooks/useLessons";
 import { useProgress } from "../../../lib/hooks/useProgress";
 import { useAuth } from "../../../lib/hooks/useAuth";
+
+interface FavoriteItem {
+  lesson_id: string;
+}
+
+interface CompletedItem {
+  lesson_id: string;
+}
 
 function PageContent() {
   const router = useRouter();
@@ -16,8 +24,34 @@ function PageContent() {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   
   const { lessons, categories, loading, error } = useLessons(slug);
-  const { progress, getLessonProgress } = useProgress();
+  const { getLessonProgress } = useProgress();
   const { user } = useAuth();
+
+  const loadFavorites = useCallback(async () => {
+    try {
+      const response = await fetch('/api/favorites');
+      if (response.ok) {
+        const data = await response.json();
+        const favoriteIds = new Set<string>(data.favorites.map((fav: FavoriteItem) => fav.lesson_id));
+        setFavorites(favoriteIds);
+      }
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  }, []);
+
+  const loadCompleted = useCallback(async () => {
+    try {
+      const response = await fetch('/api/completed');
+      if (response.ok) {
+        const data = await response.json();
+        const completedIds = new Set<string>(data.completed.map((comp: CompletedItem) => comp.lesson_id));
+        setCompletedLessons(completedIds);
+      }
+    } catch (error) {
+      console.error('Error loading completed lessons:', error);
+    }
+  }, []);
 
   // Загружаем статусы избранного и завершенного при загрузке компонента
   useEffect(() => {
@@ -25,33 +59,7 @@ function PageContent() {
       loadFavorites();
       loadCompleted();
     }
-  }, [user]);
-
-  const loadFavorites = async () => {
-    try {
-      const response = await fetch('/api/favorites');
-      if (response.ok) {
-        const data = await response.json();
-        const favoriteIds = new Set<string>(data.favorites.map((fav: any) => fav.lesson_id));
-        setFavorites(favoriteIds);
-      }
-    } catch (error) {
-      console.error('Error loading favorites:', error);
-    }
-  };
-
-  const loadCompleted = async () => {
-    try {
-      const response = await fetch('/api/completed');
-      if (response.ok) {
-        const data = await response.json();
-        const completedIds = new Set<string>(data.completed.map((comp: any) => comp.lesson_id));
-        setCompletedLessons(completedIds);
-      }
-    } catch (error) {
-      console.error('Error loading completed lessons:', error);
-    }
-  };
+  }, [user, loadFavorites, loadCompleted]);
 
   const toggleFavorite = async (lessonId: string, event: React.MouseEvent) => {
     event.stopPropagation();

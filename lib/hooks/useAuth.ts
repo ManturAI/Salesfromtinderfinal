@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
+import type { Session, AuthChangeEvent } from '@supabase/supabase-js';
 
 interface AuthUser {
   id: string;
@@ -8,7 +8,7 @@ interface AuthUser {
   full_name: string;
   role: 'user' | 'admin';
   avatar_url?: string;
-  preferences?: Record<string, any>;
+  preferences?: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -76,7 +76,7 @@ export function useAuth() {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]);
 
   const signIn = async (email: string, password: string) => {
     setState(prev => ({ ...prev, loading: true, error: null }));
@@ -99,7 +99,7 @@ export function useAuth() {
 
       setState({ user: data.user, loading: false, error: null });
       return { success: true, user: data.user };
-    } catch (error) {
+    } catch {
       const errorMessage = 'Failed to sign in';
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
@@ -131,7 +131,7 @@ export function useAuth() {
 
       setState({ user: data.user, loading: false, error: null });
       return { success: true, user: data.user };
-    } catch (error) {
+    } catch {
       const errorMessage = 'Failed to sign up';
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
@@ -154,7 +154,7 @@ export function useAuth() {
 
       setState({ user: null, loading: false, error: null });
       return { success: true };
-    } catch (error) {
+    } catch {
       const errorMessage = 'Failed to sign out';
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };
@@ -182,7 +182,7 @@ export function useAuth() {
 
       setState({ user: data.user, loading: false, error: null });
       return { success: true, user: data.user };
-    } catch (error) {
+    } catch {
       const errorMessage = 'Failed to update profile';
       setState(prev => ({ ...prev, loading: false, error: errorMessage }));
       return { success: false, error: errorMessage };

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+interface UserData {
+  role: 'user' | 'admin';
+}
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();
@@ -26,7 +30,7 @@ export async function GET(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -52,8 +56,8 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: users?.length || 0,
-        pages: Math.ceil((users?.length || 0) / limit)
+        total: (users as any)?.length || 0,
+        pages: Math.ceil(((users as any)?.length || 0) / limit)
       }
     });
 

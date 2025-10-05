@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+interface UserData {
+  role: 'user' | 'admin';
+}
+
 interface Lesson {
   id: string;
   title: string;
@@ -39,10 +43,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Подсчитываем количество уроков в каждой категории
-    const categoriesWithCounts = categories.map((category: Category) => ({
+    const categoriesWithCounts = (categories as any).map((category: Category) => ({
       ...category,
       lesson_count: category.lessons?.length || 0,
-      published_lesson_count: category.lessons?.filter((lesson: Lesson) => lesson.is_published).length || 0
+      published_lesson_count: (category.lessons as any)?.filter((lesson: Lesson) => lesson.is_published).length || 0
     }));
 
     return NextResponse.json({ categories: categoriesWithCounts });
@@ -76,7 +80,7 @@ export async function POST(request: NextRequest) {
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

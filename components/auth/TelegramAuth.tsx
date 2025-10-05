@@ -2,8 +2,18 @@
 
 import { useEffect, useState } from 'react';
 
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 interface TelegramAuthProps {
-  onSuccess?: (user: any) => void;
+  onSuccess?: (user: TelegramUser) => void;
   onError?: (error: string) => void;
   className?: string;
 }

@@ -200,10 +200,8 @@ export function useProgress(lessonId?: string) {
       }
 
       return { success: true, progress: data.progress };
-    } catch (error) {
-      const errorMessage = 'Failed to update progress';
-      setState(prev => ({ ...prev, loading: false, error: errorMessage }));
-      return { success: false, error: errorMessage };
+    } catch {
+      console.error('Failed to update progress');
     }
   };
 

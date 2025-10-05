@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       .eq('telegram_id', telegramUser.id)
       .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') {
+    if (fetchError && (fetchError as any).code !== 'PGRST116') {
       console.error('Error fetching user:', fetchError);
       return NextResponse.json(
         { error: 'Database error' },

@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+interface UserData {
+  role: 'user' | 'admin';
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -25,8 +29,8 @@ export async function GET(
       .eq('is_published', true)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
+    if ((error as any)) {
+      if ((error as any).code === 'PGRST116') {
         return NextResponse.json(
           { error: 'Lesson not found' },
           { status: 404 }
@@ -74,7 +78,7 @@ export async function PUT(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -144,7 +148,7 @@ export async function DELETE(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

@@ -6,7 +6,7 @@ export interface MockUser {
   full_name: string;
   role: 'user' | 'admin';
   avatar_url?: string;
-  preferences?: Record<string, any>;
+  preferences?: Record<string, unknown>;
 }
 
 export interface MockCategory {
@@ -17,19 +17,25 @@ export interface MockCategory {
   order_index: number;
   published_lesson_count: number;
   total_lesson_count: number;
+  icon?: string;
+  is_published?: boolean;
+  created_at?: string;
 }
 
 export interface MockLesson {
   id: string;
   title: string;
   slug: string;
-  description: string;
+  description?: string;
   content: string;
   type: 'sprint' | 'archive';
   category_id: string;
-  published: boolean;
+  published?: boolean;
   order_index: number;
-  lesson_categories?: MockCategory;
+  lesson_categories?: Partial<MockCategory>;
+  created_at: string;
+  updated_at?: string;
+  is_published: boolean;
 }
 
 export interface MockProgress {
@@ -37,14 +43,14 @@ export interface MockProgress {
   user_id: string;
   lesson_id: string;
   status: 'not_started' | 'in_progress' | 'completed';
-  is_favorite?: boolean;
-  is_completed?: boolean;
-  completion_percentage?: number;
-  time_spent?: number;
-  started_at?: string;
-  completed_at?: string;
-  created_at?: string;
-  updated_at?: string;
+  is_favorite: boolean;
+  is_completed: boolean;
+  completion_percentage: number;
+  time_spent: number;
+  started_at: string;
+  completed_at: string;
+  created_at: string;
+  updated_at: string;
   lessons?: MockLesson;
 }
 
@@ -95,6 +101,8 @@ const mockCategories = [
     description: 'Выявление потребностей клиента',
     order_index: 1,
     is_published: true,
+    published_lesson_count: 2,
+    total_lesson_count: 3,
     created_at: new Date().toISOString(),
   },
   {
@@ -104,6 +112,8 @@ const mockCategories = [
     description: 'Работа с возражениями',
     order_index: 2,
     is_published: true,
+    published_lesson_count: 1,
+    total_lesson_count: 2,
     created_at: new Date().toISOString(),
   },
   {
@@ -113,6 +123,8 @@ const mockCategories = [
     description: 'Работа после встречи',
     order_index: 3,
     is_published: true,
+    published_lesson_count: 0,
+    total_lesson_count: 1,
     created_at: new Date().toISOString(),
   },
   {
@@ -122,6 +134,8 @@ const mockCategories = [
     description: 'Закрытие сделки',
     order_index: 4,
     is_published: true,
+    published_lesson_count: 0,
+    total_lesson_count: 1,
     created_at: new Date().toISOString(),
   },
 ];
@@ -197,7 +211,7 @@ const mockLessons = [
   },
 ];
 
-const mockProgress = [
+const mockProgress: MockProgress[] = [
   {
     id: '1',
     user_id: '1',
@@ -214,11 +228,47 @@ const mockProgress = [
   },
 ];
 
+// Add proper type definitions
+interface QueryFilter {
+  column: string;
+  operator: string;
+  value: unknown;
+}
+
+interface QueryResult<T = unknown> {
+  data: T | null;
+  error: Error | null;
+}
+
+interface AuthUser {
+  id: string;
+  email: string;
+  user_metadata: {
+    full_name: string;
+    role: string;
+  };
+  created_at: string;
+}
+
+interface SignUpOptions {
+  data?: Record<string, unknown>;
+}
+
+interface SignUpParams {
+  email: string;
+  password: string;
+  options?: SignUpOptions;
+}
+
+interface AuthStateChangeCallback {
+  (event: string, session: { user: AuthUser } | null): void;
+}
+
 // Mock query builder
-class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
+class MockQueryBuilder implements PromiseLike<QueryResult> {
   private table: string;
   private selectFields: string = '*';
-  private filters: any[] = [];
+  private filters: QueryFilter[] = [];
   private orderBy: { column: string; ascending: boolean } | null = null;
   private limitValue: number | null = null;
   private singleResult: boolean = false;
@@ -232,7 +282,7 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
     return this;
   }
 
-  eq(column: string, value: any) {
+  eq(column: string, value: unknown) {
     this.filters.push({ column, operator: 'eq', value });
     return this;
   }
@@ -252,36 +302,45 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
     return this;
   }
 
-  insert(data: any) {
-    // Simulate inserting data into the mock database
+  insert(data: Record<string, unknown>) {
     if (this.table === 'user_progress') {
-      const newRecord = {
+      const newProgress: MockProgress = {
         id: String(mockProgress.length + 1),
+        user_id: data.user_id as string,
+        lesson_id: data.lesson_id as string,
+        status: (data.status as MockProgress['status']) || 'not_started',
+        is_favorite: Boolean(data.is_favorite),
+        is_completed: Boolean(data.is_completed),
+        completion_percentage: Number(data.completion_percentage) || 0,
+        time_spent: Number(data.time_spent) || 0,
+        started_at: (data.started_at as string) || new Date().toISOString(),
+        completed_at: (data.completed_at as string) || '',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        ...data
       };
-      mockProgress.push(newRecord);
+      (mockProgress as MockProgress[]).push(newProgress);
       return {
         select: () => ({
-          single: () => Promise.resolve({ data: newRecord, error: null })
+          single: () => Promise.resolve({ data: newProgress, error: null })
         })
       };
     }
     
     if (this.table === 'lessons') {
-      const newLesson = {
+      const newLesson: MockLesson = {
         id: String(mockLessons.length + 1),
-        slug: data.title?.toLowerCase().replace(/\s+/g, '-') || 'lesson-' + (mockLessons.length + 1),
+        title: data.title as string,
+        slug: data.slug as string,
+        content: data.content as string,
+        category_id: data.category_id as string,
+        description: data.description as string,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
         is_published: true,
         type: 'sprint',
-        order_index: mockLessons.filter(l => l.category_id === data.category_id).length + 1,
-        ...data
+        order_index: mockLessons.length + 1,
+        lesson_categories: undefined,
       };
       
-      // Find the category to add lesson_categories info
       const category = mockCategories.find(c => c.id === data.category_id);
       if (category) {
         newLesson.lesson_categories = {
@@ -292,7 +351,7 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
         };
       }
       
-      mockLessons.push(newLesson);
+      (mockLessons as MockLesson[]).push(newLesson);
       return {
         select: () => ({
           single: () => Promise.resolve({ data: newLesson, error: null })
@@ -307,92 +366,70 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
     };
   }
 
-  update(data: any) {
-    return {
-      eq: (column: string, value: any) => ({
+  update(data: Record<string, unknown>) {
+    const chainObject = {
+      eq: (_column: string, _value: unknown) => ({
         select: () => ({
           single: () => {
             // Simulate updating data in the mock database
             if (this.table === 'user_progress') {
-              const recordIndex = mockProgress.findIndex(record => (record as any)[column] === value);
+              const recordIndex = mockProgress.findIndex(record => (record as unknown as Record<string, unknown>)[_column] === _value);
               if (recordIndex !== -1) {
-                mockProgress[recordIndex] = {
-                  ...mockProgress[recordIndex],
+                const existingRecord = mockProgress[recordIndex];
+                (mockProgress as MockProgress[])[recordIndex] = {
+                  ...existingRecord,
                   ...data,
                   updated_at: new Date().toISOString()
-                };
-                return Promise.resolve({ data: mockProgress[recordIndex], error: null });
+                } as MockProgress;
               }
             }
             return Promise.resolve({ data, error: null });
-          }
-        }),
-        eq: (column2: string, value2: any) => ({
-          select: () => ({
-            single: () => {
-              // Handle multiple eq conditions (user_id and lesson_id)
-              if (this.table === 'user_progress') {
-                const recordIndex = mockProgress.findIndex(record => 
-                  (record as any)[column] === value && (record as any)[column2] === value2
-                );
-                if (recordIndex !== -1) {
-                  mockProgress[recordIndex] = {
-                    ...mockProgress[recordIndex],
-                    ...data,
-                    updated_at: new Date().toISOString()
-                  };
-                  return Promise.resolve({ data: mockProgress[recordIndex], error: null });
-                }
-              }
-              return Promise.resolve({ data, error: null });
-            }
+          },
+          eq: (_column2: string, _value2: unknown) => ({
+            single: () => Promise.resolve({ data, error: null })
           })
+        }),
+        eq: (_column2: string, _value2: unknown) => ({
+          select: () => ({
+            single: () => Promise.resolve({ data, error: null })
+          })
+        })
+      }),
+      select: () => ({
+        single: () => Promise.resolve({ data, error: null }),
+        eq: (_column: string, _value: unknown) => ({
+          single: () => Promise.resolve({ data, error: null })
         })
       })
     };
+    return chainObject;
   }
 
   delete() {
     return {
-      eq: (column: string, value: any) => Promise.resolve({ data: null, error: null })
+      eq: (_column: string, _value: unknown) => Promise.resolve({ data: null, error: null })
     };
   }
 
-  async execute() {
-    let data: any[] = [];
+  async execute(): Promise<QueryResult> {
+    let data: Record<string, unknown>[] = [];
     
     // Get data based on table
     switch (this.table) {
-      case 'lesson_categories':
-      case 'categories':
-        data = [...mockCategories];
-        // Handle JOIN with lessons table if select includes lessons
-        if (this.selectFields.includes('lessons')) {
-          data = data.map(category => {
-            const categoryLessons = mockLessons.filter(l => l.category_id === category.id);
-            return {
-              ...category,
-              lessons: categoryLessons
-            };
-          });
-        }
+      case 'user_progress':
+        data = [...mockProgress].map(progress => {
+          const lesson = mockLessons.find(l => l.id === progress.lesson_id);
+          return {
+            ...progress,
+            lessons: lesson || null
+          };
+        });
         break;
       case 'lessons':
         data = [...mockLessons];
         break;
-      case 'user_progress':
-      case 'progress':
-        data = [...mockProgress];
-        // Handle JOIN with lessons table if select includes lessons
-        if (this.selectFields.includes('lessons')) {
-          data = data.map(progress => {
-            const lesson = mockLessons.find(l => l.id === progress.lesson_id);
-            return {
-              ...progress,
-              lessons: lesson || null
-            };
-          });
-        }
+      case 'categories':
+        data = [...mockCategories];
         break;
       case 'users':
         data = [...mockUsers];
@@ -408,7 +445,8 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
           // Handle nested properties like 'lesson_categories.slug'
           if (filter.column.includes('.')) {
             const [parentKey, childKey] = filter.column.split('.');
-            return item[parentKey] && item[parentKey][childKey] === filter.value;
+            const parentValue = item[parentKey] as Record<string, unknown>;
+            return parentValue && parentValue[childKey] === filter.value;
           }
           return item[filter.column] === filter.value;
         }
@@ -421,7 +459,12 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
       data.sort((a, b) => {
         const aVal = a[this.orderBy!.column];
         const bVal = b[this.orderBy!.column];
-        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+        
+        // Handle unknown types safely
+        const aStr = String(aVal);
+        const bStr = String(bVal);
+        
+        const comparison = aStr < bStr ? -1 : aStr > bStr ? 1 : 0;
         return this.orderBy!.ascending ? comparison : -comparison;
       });
     }
@@ -440,9 +483,9 @@ class MockQueryBuilder implements PromiseLike<{ data: any; error: any }> {
   }
 
   // Make the query builder thenable so it can be awaited
-  then<TResult1 = { data: any; error: any }, TResult2 = never>(
-    onFulfilled?: ((value: { data: any; error: any }) => TResult1 | PromiseLike<TResult1>) | null | undefined,
-    onRejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | null | undefined
+  then<TResult1 = QueryResult, TResult2 = never>(
+    onFulfilled?: ((value: QueryResult) => TResult1 | PromiseLike<TResult1>) | null | undefined,
+    onRejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null | undefined
   ): PromiseLike<TResult1 | TResult2> {
     return this.execute().then(onFulfilled, onRejected);
   }
@@ -462,18 +505,21 @@ export function createMockClient() {
         }
         return { data: { user: null }, error: { message: 'Invalid credentials' } };
       },
-      signUp: async ({ email, password, options }: any) => {
+      signUp: async ({ email, options }: Omit<SignUpParams, 'password'>) => {
         const newUser = {
           id: String(mockAuthUsers.length + 1),
           email,
-          user_metadata: options?.data || {},
+          user_metadata: {
+            full_name: (options?.data?.full_name as string) || 'New User',
+            role: 'user'
+          },
           created_at: new Date().toISOString(),
         };
         mockAuthUsers.push(newUser);
         return { data: { user: newUser }, error: null };
       },
       signOut: async () => ({ error: null }),
-      onAuthStateChange: (callback: any) => {
+      onAuthStateChange: (callback: AuthStateChangeCallback) => {
         // Mock auth state change
         setTimeout(() => callback('SIGNED_IN', { user: mockAuthUsers[0] }), 100);
         return { data: { subscription: { unsubscribe: () => {} } } };

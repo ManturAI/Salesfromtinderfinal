@@ -6,6 +6,16 @@ import { Component as EtheralShadow } from "../../../components/ui/etheral-shado
 import { useAuth } from "../../../lib/hooks/useAuth";
 import TelegramAuth from "../../../components/auth/TelegramAuth";
 
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  photo_url?: string;
+  auth_date: number;
+  hash: string;
+}
+
 export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -22,7 +32,7 @@ export default function SignInPage() {
     }
   }, [user, loading, router, redirect]);
 
-  const handleTelegramSuccess = (user: any) => {
+  const handleTelegramSuccess = (user: TelegramUser) => {
     console.log('Telegram auth success:', user);
     router.push(redirect);
   };

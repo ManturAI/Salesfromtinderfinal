@@ -19,7 +19,21 @@ interface ProgressStat {
   lessons: Lesson;
 }
 
-export async function GET(request: NextRequest) {
+interface CategoryStat {
+  name: string;
+  slug: string;
+  completed: number;
+  started: number;
+  total_time: number;
+}
+
+interface TypeStat {
+  completed: number;
+  started: number;
+  total_time: number;
+}
+
+export async function GET() {
   try {
     const supabase = createClient();
 
@@ -58,6 +72,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Type assertion for progressStats
+    const typedProgressStats = progressStats as ProgressStat[] | null;
+
     // Получаем общее количество уроков
     const result = await supabase
       .from('lessons')
@@ -76,16 +93,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Вычисляем статистику
-    const completedLessons = progressStats?.filter((p: ProgressStat) => p.status === 'completed').length || 0;
-    const startedLessons = progressStats?.filter((p: ProgressStat) => p.status === 'started').length || 0;
-    const totalTimeSpent = progressStats?.reduce((sum: number, p: ProgressStat) => sum + (p.time_spent || 0), 0) || 0;
-    const averageCompletion = progressStats && progressStats.length > 0 
-      ? progressStats.reduce((sum: number, p: ProgressStat) => sum + (p.completion_percentage || 0), 0) / progressStats.length 
+    const completedLessons = typedProgressStats?.filter((p: ProgressStat) => p.status === 'completed').length || 0;
+    const startedLessons = typedProgressStats?.filter((p: ProgressStat) => p.status === 'started').length || 0;
+    const totalTimeSpent = typedProgressStats?.reduce((sum: number, p: ProgressStat) => sum + (p.time_spent || 0), 0) || 0;
+    const averageCompletion = typedProgressStats && typedProgressStats.length > 0 
+      ? typedProgressStats.reduce((sum: number, p: ProgressStat) => sum + (p.completion_percentage || 0), 0) / typedProgressStats.length 
       : 0;
 
     // Статистика по категориям
-    const categoryStats: { [key: string]: any } = {};
-    progressStats?.forEach((progress: ProgressStat) => {
+    const categoryStats: { [key: string]: CategoryStat } = {};
+    typedProgressStats?.forEach((progress: ProgressStat) => {
       const categorySlug = progress.lessons?.lesson_categories?.slug;
       const categoryName = progress.lessons?.lesson_categories?.name;
       
@@ -111,8 +128,8 @@ export async function GET(request: NextRequest) {
     });
 
     // Статистика по типам уроков
-    const typeStats: { [key: string]: any } = {};
-    progressStats?.forEach((progress: ProgressStat) => {
+    const typeStats: { [key: string]: TypeStat } = {};
+    typedProgressStats?.forEach((progress: ProgressStat) => {
       const lessonType = progress.lessons?.type;
       
       if (lessonType) {
@@ -145,7 +162,7 @@ export async function GET(request: NextRequest) {
       },
       by_category: Object.values(categoryStats),
       by_type: typeStats,
-      recent_activity: progressStats
+      recent_activity: typedProgressStats
         ?.sort((a: ProgressStat, b: ProgressStat) => new Date(b.updated_at || '').getTime() - new Date(a.updated_at || '').getTime())
         .slice(0, 10) || []
     };

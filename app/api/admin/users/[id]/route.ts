@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { z } from 'zod';
 
+interface UserData {
+  role: 'user' | 'admin';
+}
+
 const updateUserSchema = z.object({
   full_name: z.string().min(2, 'Full name must be at least 2 characters').optional(),
   role: z.enum(['user', 'admin']).optional(),
@@ -33,7 +37,7 @@ export async function GET(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -61,7 +65,7 @@ export async function GET(
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
+      if ((error as any).code === 'PGRST116') {
         return NextResponse.json(
           { error: 'User not found' },
           { status: 404 }
@@ -108,7 +112,7 @@ export async function PUT(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -188,7 +192,7 @@ export async function DELETE(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }

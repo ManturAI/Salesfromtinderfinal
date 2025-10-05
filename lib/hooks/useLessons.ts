@@ -15,7 +15,7 @@ interface Lesson {
   id: string;
   title: string;
   description: string;
-  content: any;
+  content: unknown;
   type: 'sprint' | 'archive';
   icon: string;
   order_index: number;

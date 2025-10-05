@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+interface UserData {
+  role: 'user' | 'admin';
+}
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -26,7 +30,7 @@ export async function PUT(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -63,7 +67,7 @@ export async function PUT(
       .select()
       .single();
 
-    if (error) {
+    if ((error as any)) {
       console.error('Error updating category:', error);
       return NextResponse.json(
         { error: 'Failed to update category' },
@@ -106,7 +110,7 @@ export async function DELETE(
       .eq('id', user.id)
       .single();
 
-    if (userError || userData?.role !== 'admin') {
+    if (userError || (userData as UserData)?.role !== 'admin') {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -128,7 +132,7 @@ export async function DELETE(
       );
     }
 
-    if (lessons && lessons.length > 0) {
+    if (lessons && (lessons as any).length > 0) {
       return NextResponse.json(
         { error: 'Cannot delete category with existing lessons' },
         { status: 400 }

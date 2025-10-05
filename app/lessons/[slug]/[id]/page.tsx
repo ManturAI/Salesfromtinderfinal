@@ -6,11 +6,31 @@ import { useLessons } from "../../../../lib/hooks/useLessons";
 import { useProgress } from "../../../../lib/hooks/useProgress";
 import { useAuth } from "../../../../lib/hooks/useAuth";
 
+interface ContentSection {
+  title?: string;
+  content?: string;
+  type?: string;
+  items?: string[];
+}
+
+interface LessonContentData {
+  sections?: ContentSection[];
+  [key: string]: unknown;
+}
+
+interface FavoriteItem {
+  lesson_id: string;
+}
+
+interface CompletedItem {
+  lesson_id: string;
+}
+
 interface LessonContent {
   id: string;
   title: string;
   description: string;
-  content: any;
+  content: LessonContentData | string;
   type: 'sprint' | 'archive';
   icon: string;
   lesson_categories?: {
@@ -34,6 +54,32 @@ function PageContent() {
   const { fetchLesson } = useLessons();
   const { updateProgress, getLessonProgress } = useProgress();
   const { user } = useAuth();
+
+  const loadFavoriteStatus = async () => {
+    try {
+      const response = await fetch('/api/favorites');
+      if (response.ok) {
+        const data = await response.json();
+        const favoriteLesson = data.favorites.find((fav: FavoriteItem) => fav.lesson_id === lessonId);
+        setIsFavorite(!!favoriteLesson);
+      }
+    } catch (error) {
+      console.error('Error loading favorite status:', error);
+    }
+  };
+
+  const loadCompletedStatus = async () => {
+    try {
+      const response = await fetch('/api/completed');
+      if (response.ok) {
+        const data = await response.json();
+        const completedLesson = data.completed.find((comp: CompletedItem) => comp.lesson_id === lessonId);
+        setIsCompleted(!!completedLesson);
+      }
+    } catch (error) {
+      console.error('Error loading completed status:', error);
+    }
+  };
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -59,32 +105,6 @@ function PageContent() {
       loadLesson();
     }
   }, [lessonId, fetchLesson, user]);
-
-  const loadFavoriteStatus = async () => {
-    try {
-      const response = await fetch('/api/favorites');
-      if (response.ok) {
-        const data = await response.json();
-        const favoriteLesson = data.favorites.find((fav: any) => fav.lesson_id === lessonId);
-        setIsFavorite(!!favoriteLesson);
-      }
-    } catch (error) {
-      console.error('Error loading favorite status:', error);
-    }
-  };
-
-  const loadCompletedStatus = async () => {
-    try {
-      const response = await fetch('/api/completed');
-      if (response.ok) {
-        const data = await response.json();
-        const completedLesson = data.completed.find((comp: any) => comp.lesson_id === lessonId);
-        setIsCompleted(!!completedLesson);
-      }
-    } catch (error) {
-      console.error('Error loading completed status:', error);
-    }
-  };
 
   const toggleFavorite = async () => {
     if (!user) return;
@@ -138,7 +158,7 @@ function PageContent() {
     if (!lesson) return;
     
     const result = await updateProgress(lesson.id, 'in_progress');
-    if (result.success) {
+    if (result?.success) {
       // Можно добавить уведомление об успехе
     }
   };
@@ -147,13 +167,13 @@ function PageContent() {
     if (!lesson) return;
     
     const result = await updateProgress(lesson.id, 'completed');
-    if (result.success) {
+    if (result?.success) {
       // Можно добавить уведомление об успехе
       setIsCompleted(true);
     }
   };
 
-  const renderLessonContent = (content: any) => {
+  const renderLessonContent = (content: LessonContentData | string) => {
     if (!content) return null;
 
     // Если контент - это строка, отображаем как текст
@@ -171,7 +191,7 @@ function PageContent() {
     if (typeof content === 'object') {
       return (
         <div className="space-y-6">
-          {content.sections?.map((section: any, index: number) => (
+          {content.sections?.map((section: ContentSection, index: number) => (
             <div key={index} className="bg-white/5 rounded-xl p-6 border border-white/10">
               {section.title && (
                 <h3 className="text-xl font-semibold text-white mb-4">
