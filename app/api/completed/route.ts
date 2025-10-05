@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const supabase = await createClient();
     
@@ -75,7 +75,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     let result;
-    const updateData: any = { 
+    const updateData: {
+      is_completed: boolean;
+      status: string;
+      completed_at: string | null;
+    } = { 
       is_completed,
       status: is_completed ? 'completed' : 'not_started',
       completed_at: is_completed ? new Date().toISOString() : null

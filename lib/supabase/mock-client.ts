@@ -407,7 +407,16 @@ class MockQueryBuilder implements PromiseLike<QueryResult> {
 
   delete() {
     return {
-      eq: (_column: string, _value: unknown) => Promise.resolve({ data: null, error: null })
+      eq: (column: string, value: unknown) => {
+        // Simulate deleting data from the mock database
+        if (this.table === 'user_progress') {
+          const recordIndex = mockProgress.findIndex(record => (record as unknown as Record<string, unknown>)[column] === value);
+          if (recordIndex !== -1) {
+            mockProgress.splice(recordIndex, 1);
+          }
+        }
+        return Promise.resolve({ data: null, error: null });
+      }
     };
   }
 

@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
       .eq('lesson_id', lesson_id)
       .single();
 
-    if (checkError && (checkError as any).code !== 'PGRST116') {
+    if (checkError && (checkError as { code?: string }).code !== 'PGRST116') {
       console.error('Error checking existing progress:', checkError);
       return NextResponse.json(
         { error: 'Failed to check existing progress' },
@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
       const result = await supabase
         .from('user_progress')
         .update(updateData)
-        .eq('id', (existingProgress as any).id)
+        .eq('id', (existingProgress as { id: string }).id)
         .select()
         .single();
 

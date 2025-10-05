@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Аутентифицируем пользователя
-    const authResult = authenticateTelegramUser(initData, botToken);
+    const authResult = await authenticateTelegramUser(initData, botToken);
     if (!authResult.success || !authResult.user) {
       return NextResponse.json(
         { error: authResult.error || 'Authentication failed' },
@@ -37,13 +37,13 @@ export async function POST(request: NextRequest) {
     const supabase = createClient();
 
     // Проверяем, существует ли пользователь в базе данных
-    let { data: existingUser, error: fetchError } = await supabase
+    const { data: existingUser, error: fetchError } = await supabase
       .from('users')
       .select('*')
       .eq('telegram_id', telegramUser.id)
       .single();
 
-    if (fetchError && (fetchError as any).code !== 'PGRST116') {
+    if (fetchError && (fetchError as { code?: string }).code !== 'PGRST116') {
       console.error('Error fetching user:', fetchError);
       return NextResponse.json(
         { error: 'Database error' },
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
 
     // Создаем JWT токен
     const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
-    const token = createTelegramJWT(telegramUser, jwtSecret);
+    const token = await createTelegramJWT(telegramUser, jwtSecret);
 
     // Устанавливаем cookie с токеном
     const cookieStore = await cookies();
@@ -167,7 +167,7 @@ export async function GET(request: NextRequest) {
 
     const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
     const { verifyTelegramJWT } = await import('@/lib/utils/telegram-auth');
-    const payload = verifyTelegramJWT(token, jwtSecret);
+    const payload = await verifyTelegramJWT(token, jwtSecret);
 
     if (!payload) {
       return NextResponse.json(

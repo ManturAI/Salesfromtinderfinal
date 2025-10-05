@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        total: (users as any)?.length || 0,
-        pages: Math.ceil(((users as any)?.length || 0) / limit)
+        total: Array.isArray(users) ? users.length : 0,
+        pages: Math.ceil((Array.isArray(users) ? users.length : 0) / limit)
       }
     });
 

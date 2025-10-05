@@ -1,4 +1,3 @@
-import crypto from 'crypto';
 import { ParsedInitData, TelegramUser, TelegramAuthResult } from '@/lib/types/telegram';
 
 /**
@@ -31,12 +30,34 @@ export function parseInitData(initData: string): ParsedInitData | null {
 }
 
 /**
+ * Создает HMAC подпись используя Web Crypto API
+ */
+async function createHmac(algorithm: string, key: string | Uint8Array, data: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const keyData = typeof key === 'string' ? encoder.encode(key) : new Uint8Array(key);
+  const dataBuffer = encoder.encode(data);
+  
+  const cryptoKey = await crypto.subtle.importKey(
+    'raw',
+    keyData,
+    { name: 'HMAC', hash: algorithm === 'sha256' ? 'SHA-256' : 'SHA-1' },
+    false,
+    ['sign']
+  );
+  
+  const signature = await crypto.subtle.sign('HMAC', cryptoKey, dataBuffer);
+  return Array.from(new Uint8Array(signature))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+/**
  * Валидирует подпись Telegram initData
  */
-export function validateTelegramData(
+export async function validateTelegramData(
   initData: string, 
   botToken: string
-): { isValid: boolean; data?: ParsedInitData } {
+): Promise<{ isValid: boolean; data?: ParsedInitData }> {
   try {
     const parsed = parseInitData(initData);
     if (!parsed || !parsed.hash) {
@@ -55,16 +76,11 @@ export function validateTelegramData(
       .join('\n');
 
     // Создаем секретный ключ
-    const secretKey = crypto
-      .createHmac('sha256', 'WebAppData')
-      .update(botToken)
-      .digest();
+    const secretKey = await createHmac('sha256', 'WebAppData', botToken);
+    const secretKeyBytes = new Uint8Array(secretKey.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16)));
 
     // Создаем подпись
-    const signature = crypto
-      .createHmac('sha256', secretKey)
-      .update(sortedParams)
-      .digest('hex');
+    const signature = await createHmac('sha256', secretKeyBytes, sortedParams);
 
     const isValid = signature === hash;
     
@@ -97,13 +113,13 @@ export function extractTelegramUser(initData: string): TelegramUser | null {
 /**
  * Полная валидация и аутентификация пользователя
  */
-export function authenticateTelegramUser(
+export async function authenticateTelegramUser(
   initData: string,
   botToken: string
-): TelegramAuthResult {
+): Promise<TelegramAuthResult> {
   try {
     // Валидируем подпись
-    const validation = validateTelegramData(initData, botToken);
+    const validation = await validateTelegramData(initData, botToken);
     if (!validation.isValid || !validation.data) {
       return {
         success: false,
@@ -143,7 +159,7 @@ export function authenticateTelegramUser(
 /**
  * Создает JWT токен для пользователя Telegram
  */
-export function createTelegramJWT(user: TelegramUser, secret: string): string {
+export async function createTelegramJWT(user: TelegramUser, secret: string): Promise<string> {
   const payload = {
     telegram_id: user.id,
     first_name: user.first_name,
@@ -160,28 +176,24 @@ export function createTelegramJWT(user: TelegramUser, secret: string): string {
   const header = Buffer.from(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).toString('base64url');
   const payloadStr = Buffer.from(JSON.stringify(payload)).toString('base64url');
   
-  const signature = crypto
-    .createHmac('sha256', secret)
-    .update(`${header}.${payloadStr}`)
-    .digest('base64url');
+  const signature = await createHmac('sha256', secret, `${header}.${payloadStr}`);
+  const signatureBase64 = Buffer.from(signature, 'hex').toString('base64url');
 
-  return `${header}.${payloadStr}.${signature}`;
+  return `${header}.${payloadStr}.${signatureBase64}`;
 }
 
 /**
  * Верифицирует JWT токен
  */
-export function verifyTelegramJWT(token: string, secret: string): TelegramUser | null {
+export async function verifyTelegramJWT(token: string, secret: string): Promise<TelegramUser | null> {
   try {
     const [header, payload, signature] = token.split('.');
     
     // Проверяем подпись
-    const expectedSignature = crypto
-      .createHmac('sha256', secret)
-      .update(`${header}.${payload}`)
-      .digest('base64url');
+    const expectedSignature = await createHmac('sha256', secret, `${header}.${payload}`);
+    const expectedSignatureBase64 = Buffer.from(expectedSignature, 'hex').toString('base64url');
 
-    if (signature !== expectedSignature) {
+    if (signature !== expectedSignatureBase64) {
       return null;
     }
 

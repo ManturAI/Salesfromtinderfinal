@@ -65,7 +65,7 @@ export async function GET(
       .single();
 
     if (error) {
-      if ((error as any).code === 'PGRST116') {
+      if ((error as { code?: string }).code === 'PGRST116') {
         return NextResponse.json(
           { error: 'User not found' },
           { status: 404 }

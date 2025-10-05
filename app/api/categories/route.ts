@@ -14,7 +14,7 @@ interface Lesson {
 
 interface Category {
   lessons?: Lesson[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export async function GET(request: NextRequest) {
@@ -43,11 +43,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Подсчитываем количество уроков в каждой категории
-    const categoriesWithCounts = (categories as any).map((category: Category) => ({
+    const categoriesWithCounts = Array.isArray(categories) ? categories.map((category: Category) => ({
       ...category,
       lesson_count: category.lessons?.length || 0,
-      published_lesson_count: (category.lessons as any)?.filter((lesson: Lesson) => lesson.is_published).length || 0
-    }));
+      published_lesson_count: Array.isArray(category.lessons) ? category.lessons.filter((lesson: Lesson) => lesson.is_published).length : 0
+    })) : [];
 
     return NextResponse.json({ categories: categoriesWithCounts });
   } catch (error) {

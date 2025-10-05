@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     if (telegramToken) {
       const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
-      const payload = verifyTelegramJWT(telegramToken, jwtSecret);
+      const payload = await verifyTelegramJWT(telegramToken, jwtSecret);
 
       if (payload) {
         // Получаем пользователя по telegram_id (using id from TelegramUser)

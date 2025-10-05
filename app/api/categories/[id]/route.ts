@@ -7,11 +7,11 @@ interface UserData {
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient();
-    const { id } = params;
+    const { id } = await params;
     
     // Проверяем аутентификацию пользователя
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -67,7 +67,7 @@ export async function PUT(
       .select()
       .single();
 
-    if ((error as any)) {
+    if (error) {
       console.error('Error updating category:', error);
       return NextResponse.json(
         { error: 'Failed to update category' },
@@ -87,11 +87,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = createClient();
-    const { id } = params;
+    const { id } = await params;
     
     // Проверяем аутентификацию пользователя
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -132,7 +132,7 @@ export async function DELETE(
       );
     }
 
-    if (lessons && (lessons as any).length > 0) {
+    if (lessons && Array.isArray(lessons) && lessons.length > 0) {
       return NextResponse.json(
         { error: 'Cannot delete category with existing lessons' },
         { status: 400 }

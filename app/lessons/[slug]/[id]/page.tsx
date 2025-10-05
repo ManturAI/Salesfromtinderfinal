@@ -1,5 +1,5 @@
 "use client"
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Component as EtheralShadow } from "../../../../components/ui/etheral-shadow";
 import { useLessons } from "../../../../lib/hooks/useLessons";
@@ -55,7 +55,7 @@ function PageContent() {
   const { updateProgress, getLessonProgress } = useProgress();
   const { user } = useAuth();
 
-  const loadFavoriteStatus = async () => {
+  const loadFavoriteStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/favorites');
       if (response.ok) {
@@ -66,9 +66,9 @@ function PageContent() {
     } catch (error) {
       console.error('Error loading favorite status:', error);
     }
-  };
+  }, [lessonId]);
 
-  const loadCompletedStatus = async () => {
+  const loadCompletedStatus = useCallback(async () => {
     try {
       const response = await fetch('/api/completed');
       if (response.ok) {
@@ -79,7 +79,7 @@ function PageContent() {
     } catch (error) {
       console.error('Error loading completed status:', error);
     }
-  };
+  }, [lessonId]);
 
   useEffect(() => {
     const loadLesson = async () => {
@@ -104,7 +104,7 @@ function PageContent() {
     if (lessonId) {
       loadLesson();
     }
-  }, [lessonId, fetchLesson, user]);
+  }, [lessonId, fetchLesson, user, loadFavoriteStatus, loadCompletedStatus]);
 
   const toggleFavorite = async () => {
     if (!user) return;

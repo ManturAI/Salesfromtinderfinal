@@ -40,7 +40,7 @@ export async function updateSession(request: NextRequest) {
     try {
       const jwtSecret = process.env.JWT_SECRET || 'fallback-secret-key';
       const { verifyTelegramJWT } = await import('@/lib/utils/telegram-auth');
-      const payload = verifyTelegramJWT(telegramToken, jwtSecret);
+      const payload = await verifyTelegramJWT(telegramToken, jwtSecret);
       
       if (payload && payload.telegram_id) {
         // Verify user exists in database

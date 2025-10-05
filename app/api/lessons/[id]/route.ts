@@ -7,11 +7,11 @@ interface UserData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
 
     const { data: lesson, error } = await supabase
       .from('lessons')
@@ -29,8 +29,8 @@ export async function GET(
       .eq('is_published', true)
       .single();
 
-    if ((error as any)) {
-      if ((error as any).code === 'PGRST116') {
+    if (error) {
+      if ((error as { code?: string }).code === 'PGRST116') {
         return NextResponse.json(
           { error: 'Lesson not found' },
           { status: 404 }
@@ -55,11 +55,11 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
     
     // Проверяем аутентификацию пользователя
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -125,11 +125,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const supabase = await createClient();
-    const { id } = params;
+    const { id } = await params;
     
     // Проверяем аутентификацию пользователя
     const { data: { user }, error: authError } = await supabase.auth.getUser();
