@@ -76,17 +76,24 @@ export async function updateSession(request: NextRequest) {
     }
   }
 
-  // Redirect to auth if not authenticated and not on auth pages
-  if (
-    !isAuthenticated &&
-    !request.nextUrl.pathname.startsWith('/login') &&
-    !request.nextUrl.pathname.startsWith('/auth') &&
-    !request.nextUrl.pathname.startsWith('/api/auth')
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/signin'
-    return NextResponse.redirect(url)
+  // For web app mode - automatically authenticate with Telegram ID if available
+  if (!isAuthenticated) {
+    // Check if this is a Telegram Web App
+    const userAgent = request.headers.get('user-agent') || '';
+    const telegramWebApp = request.headers.get('x-telegram-web-app') || 
+                          request.nextUrl.searchParams.get('tgWebAppData') ||
+                          userAgent.includes('TelegramBot');
+    
+    if (telegramWebApp) {
+      // For Telegram Web App, we'll handle authentication automatically
+      // The app should provide Telegram user data through initData
+      console.log('Telegram Web App detected, allowing access for auto-authentication');
+      return NextResponse.next();
+    }
+    
+    // For non-Telegram access, still allow access but log it
+    console.log('Non-authenticated access detected, allowing for web app mode');
+    return NextResponse.next();
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're

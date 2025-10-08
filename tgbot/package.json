@@ -1,0 +1,30 @@
+{
+  "name": "sales-training-telegram-bot",
+  "version": "1.0.0",
+  "description": "Telegram bot for Sales Training web application",
+  "main": "bot/index.js",
+  "scripts": {
+    "start": "node bot/index.js",
+    "dev": "nodemon bot/index.js",
+    "install-deps": "npm install"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "sales",
+    "training",
+    "webapp"
+  ],
+  "author": "Sales Training Team",
+  "license": "MIT",
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

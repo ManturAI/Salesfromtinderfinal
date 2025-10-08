@@ -56,55 +56,92 @@ function PageContent() {
   const { user } = useAuth();
 
   const loadFavoriteStatus = useCallback(async () => {
+    if (!user) return false;
     try {
       const response = await fetch('/api/favorites');
       if (response.ok) {
         const data = await response.json();
         const favoriteLesson = data.favorites.find((fav: FavoriteItem) => fav.lesson_id === lessonId);
-        setIsFavorite(!!favoriteLesson);
+        return !!favoriteLesson;
       }
     } catch (error) {
       console.error('Error loading favorite status:', error);
     }
-  }, [lessonId]);
+    return false;
+  }, [lessonId, user]);
 
   const loadCompletedStatus = useCallback(async () => {
+    if (!user) return false;
     try {
       const response = await fetch('/api/completed');
       if (response.ok) {
         const data = await response.json();
         const completedLesson = data.completed.find((comp: CompletedItem) => comp.lesson_id === lessonId);
-        setIsCompleted(!!completedLesson);
+        return !!completedLesson;
       }
     } catch (error) {
       console.error('Error loading completed status:', error);
     }
-  }, [lessonId]);
+    return false;
+  }, [lessonId, user]);
 
   useEffect(() => {
-    const loadLesson = async () => {
+    const abortController = new AbortController();
+    
+    const loadAllData = async () => {
+      if (!lessonId) return;
+      
+      setLoading(true);
+      setError(null);
+      
       try {
-        setLoading(true);
-        setError(null);
-        const lessonData = await fetchLesson(lessonId);
-        setLesson(lessonData);
+        // Создаем модифицированную версию fetchLesson с AbortController
+        const fetchLessonWithAbort = async (id: string) => {
+          const response = await fetch(`/api/lessons/${id}`, {
+            signal: abortController.signal
+          });
+          if (!response.ok) {
+            throw new Error('Failed to fetch lesson');
+          }
+          const data = await response.json();
+          return data.lesson;
+        };
         
-        // Загружаем статус избранного и завершенного
-        if (user) {
-          await loadFavoriteStatus();
-          await loadCompletedStatus();
-        }
+        // Загружаем все данные параллельно
+        const [lessonData, favoriteStatus, completedStatus] = await Promise.all([
+          fetchLessonWithAbort(lessonId),
+          loadFavoriteStatus(),
+          loadCompletedStatus()
+        ]);
+        
+        // Проверяем, не был ли запрос отменен
+        if (abortController.signal.aborted) return;
+        
+        // Обновляем все состояния одновременно
+        setLesson(lessonData);
+        setIsFavorite(favoriteStatus);
+        setIsCompleted(completedStatus);
+        
       } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Игнорируем ошибки отмены запроса
+          return;
+        }
         setError(err instanceof Error ? err.message : 'Failed to load lesson');
       } finally {
-        setLoading(false);
+        if (!abortController.signal.aborted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (lessonId) {
-      loadLesson();
-    }
-  }, [lessonId, fetchLesson, user, loadFavoriteStatus, loadCompletedStatus]);
+    loadAllData();
+    
+    // Очистка: отменяем запрос при размонтировании или изменении lessonId
+    return () => {
+      abortController.abort();
+    };
+  }, [lessonId]);
 
   const toggleFavorite = async () => {
     if (!user) return;
@@ -140,7 +177,7 @@ function PageContent() {
         },
         body: JSON.stringify({
           lesson_id: lessonId,
-          completed: !isCompleted
+          is_completed: !isCompleted
         }),
       });
 

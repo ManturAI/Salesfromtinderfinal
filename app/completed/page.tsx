@@ -135,15 +135,12 @@ export default function CompletedPage() {
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-6">
               Завершенные уроки
             </h1>
-            <p className="text-white/70 mb-8">
-              Войдите в систему, чтобы просмотреть завершенные уроки
+            <p className="text-white/60 mb-6 text-center">
+              Войдите в систему через Telegram, чтобы просмотреть завершенные уроки
             </p>
-            <Link
-              href="/auth/signin"
-              className="inline-block px-6 py-3 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-lg hover:bg-violet-500/30 transition-colors"
-            >
-              Войти
-            </Link>
+            <div className="text-center px-6 py-3 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg">
+              Автоматический вход через Telegram
+            </div>
           </div>
         </div>
       </div>

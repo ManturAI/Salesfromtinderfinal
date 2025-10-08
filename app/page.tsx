@@ -16,11 +16,22 @@ export default function Home() {
       const params = new URLSearchParams(window.location.search);
       const shouldOpen = params.get("actions") === "1";
       const stored = localStorage.getItem("sf_actions") === "true";
+      console.log('Initial state check:', { shouldOpen, stored, showActions });
       if (shouldOpen || stored) {
         setShowActions(true);
       }
     }
   }, []);
+
+  // Debug logging for categories
+  useEffect(() => {
+    console.log('Categories state changed:', { 
+      categories: categories?.length || 0, 
+      loading, 
+      error, 
+      showActions 
+    });
+  }, [categories, loading, error, showActions]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -156,18 +167,9 @@ export default function Home() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
-                  <Link
-                    href="/auth/signin"
-                    className="px-3 py-1.5 bg-white/5 text-white/70 border border-white/10 rounded-lg hover:bg-white/10 transition-colors text-sm"
-                  >
-                    Войти
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    className="px-3 py-1.5 bg-violet-500/20 text-violet-300 border border-violet-500/30 rounded-lg hover:bg-violet-500/30 transition-colors text-sm"
-                  >
-                    Регистрация
-                  </Link>
+                  <div className="px-3 py-1.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-lg text-sm">
+                    Автоматический вход через Telegram
+                  </div>
                 </div>
               )}
             </div>
@@ -216,7 +218,17 @@ export default function Home() {
           )}
           {!showActions && (
             <div className="mt-6 pointer-events-auto">
-              <HoverButton onClick={() => { setShowActions(true); try { localStorage.setItem("sf_actions", "true"); } catch {} }}>
+              <HoverButton onClick={() => { 
+                console.log('Start button clicked, setting showActions to true');
+                console.log('Current categories:', categories?.length || 0);
+                setShowActions(true); 
+                try { 
+                  localStorage.setItem("sf_actions", "true"); 
+                  console.log('localStorage updated');
+                } catch (e) {
+                  console.error('Failed to update localStorage:', e);
+                } 
+              }}>
                 Начать
               </HoverButton>
             </div>
@@ -224,41 +236,83 @@ export default function Home() {
           {showActions && (
             <div className="mt-8 space-y-4 pointer-events-auto">
               {loading ? (
-                <div className="text-white/70 text-center py-8">
-                  Загрузка категорий...
+                <div className="text-white/70 text-center py-8 animate-pulse">
+                  <div className="inline-flex items-center gap-2">
+                    <svg className="animate-spin h-5 w-5 text-white/70" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Загрузка категорий...
+                  </div>
                 </div>
+
               ) : error ? (
-                <div className="text-red-400 text-center py-8">
-                  Ошибка загрузки: {error}
+                <div className="text-red-400 text-center py-8 bg-red-500/10 border border-red-500/20 rounded-lg">
+                  <div className="font-medium">Ошибка загрузки</div>
+                  <div className="text-sm text-red-300 mt-1">{error}</div>
+                  <button 
+                    onClick={() => window.location.reload()} 
+                    className="mt-2 px-3 py-1 bg-red-500/20 text-red-300 border border-red-500/30 rounded text-sm hover:bg-red-500/30"
+                  >
+                    Перезагрузить
+                  </button>
+                </div>
+              ) : !categories || categories.length === 0 ? (
+                <div className="text-white/70 text-center py-8 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                  <div className="font-medium">Категории не найдены</div>
+                  <div className="text-sm text-yellow-300 mt-1">
+                    Проверьте подключение к базе данных
+                  </div>
+                  <div className="text-xs text-yellow-200 mt-2">
+                    Debug: categories = {JSON.stringify(categories)}
+                  </div>
                 </div>
               ) : (
-                categories
-                  .sort((a, b) => a.order_index - b.order_index)
-                  .map((category) => (
-                    <Link 
-                      key={category.id}
-                      href={`/lessons/${category.slug}`} 
-                      aria-label={category.name} 
-                      className="group block w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition focus:outline-none focus:ring-2 focus:ring-purple-400/40"
-                    >
-                      <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-gradient-to-br from-white/10 to-white/5 text-white/90 group-hover:text-fuchsia-300 transition-colors">
-                        {getCategoryIcon(category.slug)}
-                      </span>
-                      <span className="flex-1">
-                        <span className="block text-base md:text-lg font-semibold text-white">
-                          {category.name}
-                        </span>
-                        <span className="block text-sm text-white/70">
-                          {category.description}
-                        </span>
-                        {category.published_lesson_count > 0 && (
-                          <span className="block text-xs text-white/50 mt-1">
-                            {category.published_lesson_count} урок{category.published_lesson_count === 1 ? '' : category.published_lesson_count < 5 ? 'а' : 'ов'}
+                <div className="space-y-4 animate-in fade-in duration-500">
+                  <div className="text-center text-white/50 text-sm mb-4">
+                    Найдено категорий: {categories.length}
+                  </div>
+                  {categories
+                    .sort((a, b) => a.order_index - b.order_index)
+                    .map((category, index) => (
+                      <div 
+                        key={category.id}
+                        className="animate-in slide-in-from-bottom duration-300"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      >
+                        <Link 
+                          href={`/lessons/${category.slug}`} 
+                          aria-label={category.name} 
+                          className="group block w-full text-left flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 backdrop-blur-md px-5 py-4 shadow-sm hover:border-white/20 hover:bg-white/10 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg"
+                        >
+                          <span className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/15 bg-gradient-to-br from-white/10 to-white/5 text-white/90 group-hover:text-fuchsia-300 transition-colors">
+                            {getCategoryIcon(category.slug)}
                           </span>
-                        )}
-                      </span>
-                    </Link>
-                  ))
+                          <span className="flex-1">
+                            <span className="block text-base md:text-lg font-semibold text-white group-hover:text-fuchsia-300 transition-colors">
+                              {category.name}
+                            </span>
+                            <span className="block text-sm text-white/70">
+                              {category.description}
+                            </span>
+                            {category.published_lesson_count > 0 && (
+                              <span className="block text-xs text-white/50 mt-1">
+                                {category.published_lesson_count} урок{category.published_lesson_count === 1 ? '' : category.published_lesson_count < 5 ? 'а' : 'ов'}
+                              </span>
+                            )}
+                          </span>
+                          <svg 
+                            className="h-5 w-5 text-white/30 group-hover:text-fuchsia-300 transition-colors" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </Link>
+                      </div>
+                    ))}
+                </div>
               )}
             </div>
           )}

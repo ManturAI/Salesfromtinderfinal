@@ -60,7 +60,7 @@ export default function Page() {
   // All useEffect hooks must be called before any conditional logic
   useEffect(() => {
     if (!authLoading && (!user || user.role !== 'admin')) {
-      router.push('/auth/signin?redirect=/admin');
+      router.push('/?error=access_denied');
     }
   }, [user, authLoading, router]);
 
