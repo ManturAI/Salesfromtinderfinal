@@ -54,7 +54,8 @@ export function useLessons(categorySlug?: string, type?: string) {
         throw new Error('Failed to fetch categories');
       }
       const data = await response.json();
-      return data.categories;
+      console.log('Categories API response:', data);
+      return data.categories || [];
     } catch (error) {
       console.error('Error fetching categories:', error);
       throw error;
@@ -72,7 +73,8 @@ export function useLessons(categorySlug?: string, type?: string) {
         throw new Error('Failed to fetch lessons');
       }
       const data = await response.json();
-      return data.lessons;
+      console.log('Lessons API response:', data);
+      return data.lessons || [];
     } catch (error) {
       console.error('Error fetching lessons:', error);
       throw error;
@@ -98,18 +100,25 @@ export function useLessons(categorySlug?: string, type?: string) {
       setState(prev => ({ ...prev, loading: true, error: null }));
       
       try {
+        console.log('Loading data with params:', { categorySlug, type });
         const [categories, lessons] = await Promise.all([
           fetchCategories(),
           fetchLessons(categorySlug, type)
         ]);
 
+        console.log('Data loaded successfully:', { 
+          categoriesCount: categories?.length || 0, 
+          lessonsCount: lessons?.length || 0 
+        });
+
         setState({
-          categories,
-          lessons,
+          categories: categories || [],
+          lessons: lessons || [],
           loading: false,
           error: null,
         });
       } catch (error) {
+        console.error('Error loading data:', error);
         setState(prev => ({
           ...prev,
           loading: false,
